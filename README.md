@@ -2,7 +2,17 @@
 
 This repo provides a official implementation for paper: *REAL: Retrieval-Augmented Prototype Alignment for Improved Fake News Video Detection*, accepted by ICME 2025.
 
-# Source Code Structure
+## Abstract
+
+Detecting fake news videos has emerged as a critical task due to their profound implications in politics, finance, and public health. However, existing methods often fail to distinguish real videos from their subtly manipulated counterparts, resulting in suboptimal performance. To address this limitation,
+we propose REAL, a novel model-agnostic REtrieval-Augmented prototype-aLignment framework. REAL first introduces an LLM-driven video retriever to identify contextually relevant samples for a given target video. Subsequently, a dual-prototype aligner is carefully developed to model two distinct prototypes: one representing authentic patterns from retrieved real news videos and the other encapsulating manipulation-specific patterns from fake samples. By aligning the target video’s representations with its ground-truth prototype while distancing them from the opposing prototype, the aligner captures manipulation-aware representations capable of detecting even subtle video manipulations. Finally, these enriched representations are seamlessly integrated into existing detection models in a plug-and-play manner. Extensive experiments on three benchmarks demonstrate that REAL largely enhances the detection ability of existing methods.
+
+## Framework
+
+<img width="1071" alt="image" src="https://github.com/user-attachments/assets/89423f7d-0b31-4a16-8d1a-39a1479b06bd" />
+
+
+## Source Code Structure
 
 ```sh
 ├── data    # dataset path
@@ -24,7 +34,7 @@ This repo provides a official implementation for paper: *REAL: Retrieval-Augment
 └── └── utils
 ```
 
-# Dataset
+## Dataset
 
 We provide video IDs for each dataset splits. Due to copyright restrictions, the raw datasets are not included. You can obtain the datasets from their respective original project sites.
 
@@ -32,9 +42,9 @@ We provide video IDs for each dataset splits. Due to copyright restrictions, the
 + [FakeTT](https://github.com/ICTMCG/FakingRecipe)
 + [FVC](https://github.com/MKLab-ITI/fake-video-corpus)
 
-# Usage
+## Usage
 
-## Requirement
+### Requirement
 
 To set up the environment, run the following commands:
 
@@ -44,7 +54,7 @@ conda activate REAL
 pip install -r requirements.txt
 ```
 
-## Preprocess
+### Preprocess
 
 1. Download datasets and store them in `data` presented in Source Code Structure, and save videos to `videos` in corresponding datasetpath.
 2. For video dataset, save `data.jsonl` in each dataset path, with each line including vid, title, ocr, transcript, and label.
@@ -54,7 +64,7 @@ bash run/retrieve.sh  # preprocess data and conduct retrieval
 bash run/preprocess.sh  # preprocess data for SVFEND w/ REAL
 ```
 
-## Run
+### Run
 ```sh
 python src/main.py --config-name SVFEND_FakeSV.yaml     # run SVFEND w/ REAL on FakeSV
 python src/main.py --config-name SVFEND_FakeTT.yaml     # run SVFEND w/ REAL on FakeTT
