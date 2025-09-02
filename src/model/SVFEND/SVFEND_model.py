@@ -52,7 +52,7 @@ class ModalityProtoGenerator(nn.Module):
 
         # Reshape back to (batch_size, num_nodes, fea_dim)
         proto = proto.view(batch_size, num_nodes, -1)
-        return proto
+        return proto.mean(-2)
 
 class AddLinear(nn.Module):
     def __init__(self, fea_dim=256):
@@ -63,7 +63,7 @@ class AddLinear(nn.Module):
         return self.linear(x)
 
 class SVFEND(nn.Module):
-    def __init__(self, encoder_name='bert-base-uncased', fea_dim=128, dropout=0.1, ori=False, ablation='No', **kargs):
+    def __init__(self, encoder_name='bert-base-uncased', fea_dim=128, dropout=0.1, ori=False, **kargs):
         super(SVFEND, self).__init__()
 
         # self.bert = BertModel.from_pretrained(encoder_name).requires_grad_(False)
@@ -124,7 +124,6 @@ class SVFEND(nn.Module):
         self.ori = ori
         self.alpha = 0.01
         self.beta = 0.01
-        self.ablation = ablation
 
 
     def forward(self, **kwargs):
@@ -134,14 +133,6 @@ class SVFEND(nn.Module):
         fea_vision_neg = kwargs['vision_fea_neg']
         fea_audio_pos = kwargs['audio_fea_pos']
         fea_audio_neg = kwargs['audio_fea_neg']
-        
-        if self.ablation == 'w/o-retriever':
-            fea_text_pos = fea_text_pos[torch.randperm(fea_text_pos.size(0)), :, :]
-            fea_text_neg = fea_text_neg[torch.randperm(fea_text_neg.size(0)), :, :]
-            fea_vision_pos = fea_vision_pos[torch.randperm(fea_vision_pos.size(0)), :, :]
-            fea_vision_neg = fea_vision_neg[torch.randperm(fea_vision_neg.size(0)), :, :]
-            fea_audio_pos = fea_audio_pos[torch.randperm(fea_audio_pos.size(0)), :, :]
-            fea_audio_neg = fea_audio_neg[torch.randperm(fea_audio_neg.size(0)), :, :]
         
         text_fea = kwargs['text_fea']
         fea_text = self.linear_text(text_fea) 
@@ -160,20 +151,12 @@ class SVFEND(nn.Module):
         fea_audio_pos = torch.cat([audioframes.mean(-2).unsqueeze(1), fea_audio_pos], dim=1)
         fea_audio_neg = torch.cat([audioframes.mean(-2).unsqueeze(1), fea_audio_neg], dim=1)
         
-        if self.ablation == 'w/o-graph':
-            text_pos_proto = self.text_pos_mean(fea_text_pos).mean(-2)
-            text_neg_proto = self.text_neg_mean(fea_text_neg).mean(-2)
-            vision_pos_proto = self.vision_pos_mean(fea_vision_pos).mean(-2)
-            vision_neg_proto = self.vision_neg_mean(fea_vision_neg).mean(-2)
-            audio_pos_proto = self.audio_pos_mean(fea_audio_pos).mean(-2)
-            audio_neg_proto = self.audio_neg_mean(fea_audio_neg).mean(-2)
-        else:
-            text_pos_proto = self.text_pos_self_attn(fea_text_pos)[:, 0, :]
-            text_neg_proto = self.text_neg_self_attn(fea_text_neg)[:, 0, :]
-            vision_pos_proto = self.vision_pos_self_attn(fea_vision_pos)[:, 0, :]
-            vision_neg_proto = self.vision_neg_self_attn(fea_vision_neg)[:, 0, :]
-            audio_pos_proto = self.audio_pos_self_attn(fea_audio_pos)[:, 0, :]
-            audio_neg_proto = self.audio_neg_self_attn(fea_audio_neg)[:, 0, :]
+        text_pos_proto = self.text_pos_self_attn(fea_text_pos)
+        text_neg_proto = self.text_neg_self_attn(fea_text_neg)
+        vision_pos_proto = self.vision_pos_self_attn(fea_vision_pos)
+        vision_neg_proto = self.vision_neg_self_attn(fea_vision_neg)
+        audio_pos_proto = self.audio_pos_self_attn(fea_audio_pos)
+        audio_neg_proto = self.audio_neg_self_attn(fea_audio_neg)
         
         add_fea_text = self.add_linear_text(fea_text)
         add_fea_vision = self.add_linear_vision(fea_img)
@@ -283,25 +266,23 @@ class SVFEND(nn.Module):
 
             text_l2_pos = l2_loss_fn(fea_text, text_pos_proto, label_pos)
             text_l2_neg = l2_loss_fn(fea_text, text_neg_proto, label_neg)
-            text_orth_pos = orthogonal_loss(fea_text, text_pos_proto, label_neg)
-            text_orth_neg = orthogonal_loss(fea_text, text_neg_proto, label_pos)
+            text_orth_pos = orthogonal_loss(fea_text, text_neg_proto, label_pos)
+            text_orth_neg = orthogonal_loss(fea_text, text_pos_proto, label_neg)
             
             vision_l2_pos = l2_loss_fn(fea_vision, vision_pos_proto, label_pos)
             vision_l2_neg = l2_loss_fn(fea_vision, vision_neg_proto, label_neg)
-            vision_orth_pos = orthogonal_loss(fea_vision, vision_pos_proto, label_neg)
-            vision_orth_neg = orthogonal_loss(fea_vision, vision_neg_proto, label_pos)
+            vision_orth_pos = orthogonal_loss(fea_vision, vision_neg_proto, label_pos)
+            vision_orth_neg = orthogonal_loss(fea_vision, vision_pos_proto, label_neg)
 
             audio_l2_pos = l2_loss_fn(fea_audio, audio_pos_proto, label_pos)
             audio_l2_neg = l2_loss_fn(fea_audio, audio_neg_proto, label_neg)
-            audio_orth_pos = orthogonal_loss(fea_audio, audio_pos_proto, label_neg)
-            audio_orth_neg = orthogonal_loss(fea_audio, audio_neg_proto, label_pos)
+            audio_orth_pos = orthogonal_loss(fea_audio, audio_neg_proto, label_pos)
+            audio_orth_neg = orthogonal_loss(fea_audio, audio_pos_proto, label_neg)
 
-            if self.ablation != 'w/o-real':
-                l2_loss += text_l2_pos + vision_l2_pos + audio_l2_pos
-                orth_loss += text_orth_pos + vision_orth_pos + audio_orth_pos
-            if self.ablation != 'w/o-fake':
-                l2_loss += text_l2_neg + vision_l2_neg + audio_l2_neg
-                orth_loss += text_orth_neg + vision_orth_neg + audio_orth_neg
+            l2_loss += text_l2_pos + vision_l2_pos + audio_l2_pos
+            orth_loss += text_orth_pos + vision_orth_pos + audio_orth_pos
+            l2_loss += text_l2_neg + vision_l2_neg + audio_l2_neg
+            orth_loss += text_orth_neg + vision_orth_neg + audio_orth_neg
             
             cls_loss = F.cross_entropy(pred, labels)
             loss = cls_loss + self.alpha * l2_loss + self.beta * orth_loss
