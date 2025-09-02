@@ -25,13 +25,7 @@ class SVFEND_Dataset(Base_Dataset):
         self.c3d_fea = torch.load(self.c3dfeapath, weights_only=True)
         self.vggish_fea = torch.load(self.vggishfeapath, weights_only=True)
         self.text_fea = torch.load(self.textfeapath, weights_only=True)
-        
-        if ablation == 'w/-uni':
-            self.sim_df = pd.read_json(self.data_path / 'retrieve/sim_unimodal.jsonl', lines=True, dtype={'vid': str})
-        elif ablation == 'w/-multi':
-            self.sim_df = pd.read_json(self.data_path / 'retrieve/sim_multimodal.jsonl', lines=True, dtype={'vid': str})
-        else:
-            self.sim_df = pd.read_json(self.data_path / 'retrieve/sim.jsonl', lines=True, dtype={'vid': str})
+        self.sim_df = pd.read_json(self.data_path / 'retrieve/sim.jsonl', lines=True, dtype={'vid': str})
         self.num_pos = num_pos
         self.num_neg = num_neg
         
@@ -48,8 +42,8 @@ class SVFEND_Dataset(Base_Dataset):
         c3d = self.c3d_fea[vid]
         text_fea = self.text_fea[vid]
         
-        sim_pos_vids = [v for v in self.sim_df[self.sim_df['vid'] == vid].iloc[0]['similarities'][1]['vid'][:self.num_pos]]
-        sim_neg_vids = [v for v in self.sim_df[self.sim_df['vid'] == vid].iloc[0]['similarities'][0]['vid'][:self.num_neg]]
+        sim_pos_vids = [v for v in self.sim_df[self.sim_df['vid'] == vid].iloc[0]['similarities'][0]['vid'][:self.num_pos]]
+        sim_neg_vids = [v for v in self.sim_df[self.sim_df['vid'] == vid].iloc[0]['similarities'][1]['vid'][:self.num_neg]]
         
         text_fea_pos = torch.stack([self.text_fea[v] for v in sim_pos_vids])
         text_fea_neg = torch.stack([self.text_fea[v] for v in sim_neg_vids])

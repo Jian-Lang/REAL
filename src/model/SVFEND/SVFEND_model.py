@@ -111,13 +111,6 @@ class SVFEND(nn.Module):
         self.audio_pos_self_attn = ModalityProtoGenerator(fea_dim, dropout)
         self.audio_neg_self_attn = ModalityProtoGenerator(fea_dim, dropout)
         
-        self.text_pos_mean = nn.LazyLinear(fea_dim)
-        self.text_neg_mean = nn.LazyLinear(fea_dim)
-        self.vision_pos_mean = nn.LazyLinear(fea_dim)
-        self.vision_neg_mean = nn.LazyLinear(fea_dim)
-        self.audio_pos_mean = nn.LazyLinear(fea_dim)
-        self.audio_neg_mean = nn.LazyLinear(fea_dim)
-        
         self.add_linear_text = AddLinear(fea_dim)
         self.add_linear_vision = AddLinear(fea_dim)
         self.add_linear_audio = AddLinear(fea_dim)
@@ -143,13 +136,6 @@ class SVFEND(nn.Module):
         
         frames=kwargs['frames']
         fea_img = self.linear_img(frames)
-        
-        fea_text_pos = torch.cat([text_fea.unsqueeze(1), fea_text_pos], dim=1)
-        fea_text_neg = torch.cat([text_fea.unsqueeze(1), fea_text_neg], dim=1)
-        fea_vision_pos = torch.cat([frames.mean(-2).unsqueeze(1), fea_vision_pos], dim=1)
-        fea_vision_neg = torch.cat([frames.mean(-2).unsqueeze(1), fea_vision_neg], dim=1)
-        fea_audio_pos = torch.cat([audioframes.mean(-2).unsqueeze(1), fea_audio_pos], dim=1)
-        fea_audio_neg = torch.cat([audioframes.mean(-2).unsqueeze(1), fea_audio_neg], dim=1)
         
         text_pos_proto = self.text_pos_self_attn(fea_text_pos)
         text_neg_proto = self.text_neg_self_attn(fea_text_neg)
@@ -261,8 +247,8 @@ class SVFEND(nn.Module):
             l2_loss = 0
             orth_loss = 0
 
-            label_pos = (labels == 1).float()
-            label_neg = (labels == 0).float()
+            label_pos = (labels == 0).float()
+            label_neg = (labels == 1).float()
 
             text_l2_pos = l2_loss_fn(fea_text, text_pos_proto, label_pos)
             text_l2_neg = l2_loss_fn(fea_text, text_neg_proto, label_neg)
