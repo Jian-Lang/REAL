@@ -1,4 +1,4 @@
-# REAL: Retrieval-Augmented Prototype Alignment Framework
+# REAL: REtrieval-Augmented prototype-aLignment framework
 
 This repo provides a official implementation for paper: *REAL: Retrieval-Augmented Prototype Alignment for Improved Fake News Video Detection*, accepted by ICME 2025.
 
