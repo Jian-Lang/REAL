@@ -1,0 +1,27 @@
+hydra:
+  output_subdir: null
+  run:  
+    dir: .
+data:
+  task: binary
+  num_pos: 7
+  num_neg: 3
+para:
+  ori: false
+  dropout: 0.1
+  loss_alpha: 1.0
+  loss_beta: 1.0
+opt:
+  name: Adam
+  lr: 0.0001
+  weight_decay: 5.0e-05
+sche:
+  name: SVFENDLR
+num_epoch: 5
+batch_size: 128
+seed: 2024
+model: SVFEND
+dataset: FVC
+type: default
+patience: 2
+name: SVFEND
