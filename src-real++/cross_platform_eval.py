@@ -106,13 +106,39 @@ def evaluate(model, dataloader: DataLoader, device: str):
     return metrics["acc"], metrics["macro_f1"]
 
 
-def run_cross_platform(model_name: str, ckpt_path: str, config_path: str, src_dataset: str, batch_size: int = 128):
-    """Run cross-platform evaluation with direct model loading."""
+def run_cross_platform(ckpt_path: str, config_path: str):
+    """Run cross-platform evaluation using only checkpoint and config.
+
+    Expected keys in config (YAML):
+    - model: model name (e.g., SVFEND)
+    - dataset: source dataset name (FakeSV/FakeTT/FVC)
+    - batch_size: (optional) evaluation batch size
+    - para: model kwargs dict
+    - data/task: (optional) task type (default: binary)
+    """
     import yaml
     
     # Load configuration
     with open(config_path, 'r', encoding='utf-8') as f:
         cfg = yaml.safe_load(f)
+
+    if not isinstance(cfg, dict):
+        print(f"[ERROR] invalid config format: {config_path}")
+        return
+
+    model_name = cfg.get("model")
+    src_dataset = cfg.get("dataset")
+    batch_size = int(cfg.get("batch_size", 128))
+
+    if not model_name:
+        print("[ERROR] config missing required key: model")
+        return
+    if not src_dataset:
+        print("[ERROR] config missing required key: dataset")
+        return
+    if src_dataset not in DATASETS:
+        print(f"[ERROR] unsupported dataset in config: {src_dataset}; supported={DATASETS}")
+        return
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
@@ -149,19 +175,24 @@ def run_cross_platform(model_name: str, ckpt_path: str, config_path: str, src_da
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Cross-platform evaluation: load model by checkpoint and config to evaluate transfer across datasets.")
-    parser.add_argument("--model", required=True, type=str, help="Model name")
+    parser = argparse.ArgumentParser(
+        description="Cross-platform evaluation: provide checkpoint and config; model/dataset/batch_size are read from config."
+    )
     parser.add_argument("--ckpt", required=True, type=str, help="Path to model checkpoint (.pth)")
-    parser.add_argument("--config", required=True, type=str, help="Path to configuration file (.yaml)")
-    parser.add_argument("--src_dataset", required=True, type=str, choices=DATASETS, help="Source dataset name")
-
-    parser.add_argument("--batch_size", type=int, default=128, help="Batch size for evaluation")
+    parser.add_argument(
+        "--config-name",
+        required=True,
+        type=str,
+        help="Config file name (e.g., SVFEND_FakeSV.yaml) or an explicit path to a .yaml file.",
+    )
     args = parser.parse_args()
 
+    cfg_arg = args.config_name
+    cfg_path = Path(cfg_arg)
+    if not cfg_path.is_file():
+        cfg_path = CURRENT_DIR / "model" / "SVFEND" / cfg_arg
+
     run_cross_platform(
-        args.model,
         args.ckpt,
-        args.config,
-        args.src_dataset,
-        batch_size=args.batch_size,
-    ) 
+        str(cfg_path),
+    )
