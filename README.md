@@ -1,4 +1,4 @@
-# REAL & REAL++: REtrieval-Augmented prototype aLignment ++ Prototype-Based Voting framework
+# REAL & REAL++
 
 This repo provides official implementations for papers: 
 
