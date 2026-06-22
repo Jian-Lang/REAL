@@ -14,29 +14,11 @@ Prototype-Guided Voting for Enhanced Fake News Video Detection*, which is underr
 Detecting fake news videos has emerged as a critical task due to their profound implications in politics, finance, and public health. However, existing methods often fail to distinguish real videos from their subtly manipulated counterparts, resulting in suboptimal performance. To address this limitation,
 we propose REAL, a novel model-agnostic REtrieval-Augmented prototype-aLignment framework. REAL first introduces an LLM-driven video retriever to identify contextually relevant samples for a given target video. Subsequently, a dual-prototype aligner is carefully developed to model two distinct prototypes: one representing authentic patterns from retrieved real news videos and the other encapsulating manipulation-specific patterns from fake samples. By aligning the target video’s representations with its ground-truth prototype while distancing them from the opposing prototype, the aligner captures manipulation-aware representations capable of detecting even subtle video manipulations. Finally, these enriched representations are seamlessly integrated into existing detection models in a plug-and-play manner. Extensive experiments on three benchmarks demonstrate that REAL largely enhances the detection ability of existing methods.
 
-### REAL++
-
-Fake news video detection is a critical research problem with significant implications.
-Existing methods often overlook the subtle manipulations introduced by fake news creators, making it difficult to reliably distinguish authentic videos from their slightly altered counterparts. 
-Moreover, these methods require frequent retraining on newly emerging news videos associated with breaking events in order to remain effective on out-of-distribution (OOD) instances, which is inefficient and unable to support real-time deployment.
-To address these limitations, we first propose REAL, a novel model-agnostic framework designed to enhance existing detectors for identifying subtly manipulated news videos. 
-Specifically, we introduce an LLM-driven generative video retriever that identifies semantically relevant reference videos from different categories for each input news video. 
-Based on the retrieved references, we further design a Dual-Prototype Aligner that condenses the reference videos into category-specific prototypes, from which manipulation-aware representations are derived to effectively distinguish authentic videos from their subtly modified versions.
-Building upon REAL, we further extend it to REAL++ by introducing a Prototype-Guided Voter that reuses the dual prototypes to perform parameter-free, voting-based prediction. 
-This voter assists vanilla detectors in handling OOD news videos without requiring any additional training. 
-Finally, both the aligner and the voter are seamlessly integrated into existing models in a plug-and-play manner to improve their detection capabilities.
-Extensive experiments on three real-world news video datasets demonstrate the effectiveness of REAL and REAL++. 
-In particular, REAL++ achieves an average improvement of 9.31% and 22.35% in Macro-F1 over all baseline detectors under in-domain and OOD scenarios, respectively.
-
 ## Framework
 
 ### REAL
 
 <img width="1071" alt="image" src="https://github.com/user-attachments/assets/89423f7d-0b31-4a16-8d1a-39a1479b06bd" />
-
-### REAL++
-
-<img width="1071" alt="image" src="real++.png" />
 
 
 ## Source Code Structure
